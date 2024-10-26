@@ -311,7 +311,6 @@ RID TileAtlasView::_get_canvas_item_to_draw(const TileData *p_for_data, const Ca
 		RID ci_rid = RS::get_singleton()->canvas_item_create();
 		RS::get_singleton()->canvas_item_set_parent(ci_rid, p_base_item->get_canvas_item());
 		RS::get_singleton()->canvas_item_set_material(ci_rid, mat->get_rid());
-		RS::get_singleton()->canvas_item_set_default_texture_filter(ci_rid, RS::CanvasItemTextureFilter(p_base_item->get_texture_filter_in_tree()));
 		p_material_map[mat] = ci_rid;
 		return ci_rid;
 	}
@@ -339,6 +338,24 @@ void TileAtlasView::_draw_base_tiles_texture_grid() {
 		Vector2i separation = tile_set_atlas_source->get_separation();
 		Vector2i texture_region_size = tile_set_atlas_source->get_texture_region_size();
 
+		if (grid_line_mesh_size != texture_region_size) {
+			// Using a mesh is more performant than draw_rect (for whatever reason), so we use that for the grid.
+			Vector<Vector2> shape = { Vector2(0, 0), Vector2(texture_region_size.x, 0), texture_region_size, Vector2(0, texture_region_size.y), Vector2(0, 0) };
+			Vector<Color> colors;
+			colors.resize(shape.size());
+			colors.fill(Color(1.0, 1.0, 1.0, 1.0));
+
+			grid_line_mesh->clear_surfaces();
+
+			Array a;
+			a.resize(Mesh::ARRAY_MAX);
+			a[Mesh::ARRAY_VERTEX] = shape;
+			a[Mesh::ARRAY_COLOR] = colors;
+			grid_line_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINE_STRIP, a, Array(), Dictionary(), Mesh::ARRAY_FLAG_USE_2D_VERTICES);
+
+			grid_line_mesh_size = texture_region_size;
+		}
+
 		Size2i grid_size = tile_set_atlas_source->get_atlas_grid_size();
 
 		// Draw each tile texture region.
@@ -356,6 +373,7 @@ void TileAtlasView::_draw_base_tiles_texture_grid() {
 				} else {
 					// Draw the grid.
 					base_tiles_texture_grid->draw_rect(Rect2i(origin, texture_region_size), Color(0.7, 0.7, 0.7, 0.1), false);
+					base_tiles_texture_grid->draw_mesh(grid_line_mesh, Ref<Texture2D>(), Transform2D(0.0, origin), Color(0.7, 0.7, 0.7, 0.1));
 				}
 			}
 		}
@@ -372,7 +390,7 @@ void TileAtlasView::_draw_base_tiles_shape_grid() {
 	for (int i = 0; i < tile_set_atlas_source->get_tiles_count(); i++) {
 		Vector2i tile_id = tile_set_atlas_source->get_tile_id(i);
 		Vector2 in_tile_base_offset = tile_set_atlas_source->get_tile_data(tile_id, 0)->get_texture_origin();
-		if (tile_set_atlas_source->is_rect_in_tile_texture_region(tile_id, 0, Rect2(Vector2(-tile_shape_size) / 2, tile_shape_size))) {
+		if (tile_set_atlas_source->is_position_in_tile_texture_region(tile_id, 0, -tile_shape_size / 2) && tile_set_atlas_source->is_position_in_tile_texture_region(tile_id, 0, tile_shape_size / 2 - Vector2(1, 1))) {
 			for (int frame = 0; frame < tile_set_atlas_source->get_tile_animation_frames_count(tile_id); frame++) {
 				Color color = grid_color;
 				if (frame > 0) {
@@ -760,6 +778,8 @@ TileAtlasView::TileAtlasView() {
 	alternatives_draw->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
 	alternatives_draw->connect(SceneStringName(draw), callable_mp(this, &TileAtlasView::_draw_alternatives));
 	alternative_tiles_drawing_root->add_child(alternatives_draw);
+
+	grid_line_mesh.instantiate();
 }
 
 TileAtlasView::~TileAtlasView() {
