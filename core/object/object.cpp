@@ -225,8 +225,7 @@ void Object::_get_valid_parents_static(List<String> *p_parents) {
 
 void Object::set(const StringName &p_name, const Variant &p_value, bool *r_valid) {
 #ifdef TOOLS_ENABLED
-
-	_edited = true;
+	// _edited = true;
 #endif
 
 	if (script_instance) {

@@ -53,6 +53,9 @@ void EditorFolding::save_resource_folding(const Ref<Resource> &p_resource, const
 	Ref<ConfigFile> config;
 	config.instantiate();
 	Vector<String> unfolds = _get_unfolds(p_resource.ptr());
+	if (unfolds.size() <= 0) {
+		return;
+	}
 	config->set_value("folding", "sections_unfolded", unfolds);
 
 	String file = p_path.get_file() + "-folding-" + p_path.md5_text() + ".cfg";
@@ -62,6 +65,9 @@ void EditorFolding::save_resource_folding(const Ref<Resource> &p_resource, const
 
 void EditorFolding::_set_unfolds(Object *p_object, const Vector<String> &p_unfolds) {
 	int uc = p_unfolds.size();
+	if (uc<=0) {
+		return;
+	}
 	const String *r = p_unfolds.ptr();
 	p_object->editor_clear_section_folding();
 	for (int i = 0; i < uc; i++) {
