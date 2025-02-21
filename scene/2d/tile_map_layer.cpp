@@ -3090,6 +3090,10 @@ void TileMapLayer::navmesh_parse_source_geometry(const Ref<NavigationPolygon> &p
 		return;
 	}
 
+	if (!tile_map_layer->is_enabled()) {
+		return;
+	}
+
 	int physics_layers_count = tile_set->get_physics_layers_count();
 	int navigation_layers_count = tile_set->get_navigation_layers_count();
 	if (physics_layers_count <= 0 && navigation_layers_count <= 0) {
@@ -3097,6 +3101,10 @@ void TileMapLayer::navmesh_parse_source_geometry(const Ref<NavigationPolygon> &p
 	}
 
 	NavigationPolygon::ParsedGeometryType parsed_geometry_type = p_navigation_mesh->get_parsed_geometry_type();
+	if ((parsed_geometry_type == NavigationPolygon::PARSED_GEOMETRY_STATIC_COLLIDERS || parsed_geometry_type == NavigationPolygon::PARSED_GEOMETRY_BOTH) && !tile_map_layer->is_collision_enabled())
+	{
+		return;
+	}
 	uint32_t parsed_collision_mask = p_navigation_mesh->get_parsed_collision_mask();
 
 	const Transform2D tilemap_xform = p_source_geometry_data->root_node_transform * tile_map_layer->get_global_transform();
