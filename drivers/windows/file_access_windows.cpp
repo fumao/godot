@@ -69,6 +69,20 @@ void FileAccessWindows::check_errors(bool p_write) const {
 }
 
 bool FileAccessWindows::is_path_invalid(const String &p_path) {
+	if (p_path.begins_with("uid://")) {
+		ResourceUID *resource_uid = ResourceUID::get_singleton();
+		if (resource_uid) {
+			ResourceUID::ID b = resource_uid->text_to_id(p_path);
+			if (b == ResourceUID::INVALID_ID) {
+				return false; // 或者其他处理方式
+			}
+			else
+			{
+				return !resource_uid->has_id(b);
+			}
+		}
+		return false;
+	}
 	// Check for invalid operating system file.
 	String fname = p_path.get_file().to_lower();
 
