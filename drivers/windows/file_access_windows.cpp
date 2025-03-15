@@ -75,9 +75,7 @@ bool FileAccessWindows::is_path_invalid(const String &p_path) {
 			ResourceUID::ID b = resource_uid->text_to_id(p_path);
 			if (b == ResourceUID::INVALID_ID) {
 				return false; // 或者其他处理方式
-			}
-			else
-			{
+			} else {
 				return !resource_uid->has_id(b);
 			}
 		}
